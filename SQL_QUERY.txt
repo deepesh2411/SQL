@@ -1,0 +1,234 @@
+Q1:-  Query the list of CITY names starting with vowels (i.e., a, e, i, o, or u) from STATION. 
+      Your result cannot contain duplicates.
+
+      SELECT CITY FROM STATION WHERE CITY RLIKE '^[aeiouAEIOU].*';
+
+Q2:-  Query the Name of any student in STUDENTS who scored higher than  Marks. Order your output by the last three 
+      characters of each name. If two or more students both have names ending in the same last three characters 
+      (i.e.: Bobby, Robby, etc.), secondary sort them by ascending ID.
+
+
+      SELECT NAME FROM STUDENTS WHERE MARKS >75 ORDER BY (SELECT SUBSTRING(NAME, LENGTH(NAME)-2, LENGTH(NAME))),ID;
+
+
+
+Q3:-  Given the CITY and COUNTRY tables, query the names of all the continents (COUNTRY.Continent) and their respective 
+      average city populations (CITY.Population) rounded down to the nearest integer.
+
+
+      select COUNTRY.Continent,FLOOR(avg(CITY.POPULATION)) FROM CITY,COUNTRY
+      WHERE CITY.CountryCode = COUNTRY.Code 
+      GROUP BY COUNTRY.CONTINENT;
+
+
+Q4:-  Ketty gives Eve a task to generate a report containing three columns: Name, Grade and Mark. Ketty doesn't want 
+      the NAMES of those students who received a grade lower than 8. The report must be in descending order by grade --
+      i.e. higher grades are entered first. If there is more than one student with the same grade (8-10) assigned to them,
+      order those particular students by their name alphabetically. Finally, if the grade is lower than 8, use "NULL" as 
+      their name and list them by their grades in descending order. If there is more than one student with the same grade
+      (1-7) assigned to them, order those particular students by their marks in ascending order.
+
+
+	select 
+		case 
+    			when grade<8 then  NULL
+    			else  name
+		end,grade, marks 
+	from Students,Grades
+	WHERE marks BETWEEN min_mark AND max_mark 
+	order by grade desc, case when grade>=8 then name else marks end;
+
+Q5:-   Top Competitors(medium)
+----------------------------------------------------------------------
+       Julia just finished conducting a coding contest, and she needs your help assembling the leaderboard! Write a 
+       query to print the respective hacker_id and name of hackers who achieved full scores for more than one challenge.
+       Order your output in descending order by the total number of challenges in which the hacker earned a full score.
+       If more than one hacker received full scores in same number of challenges, then sort them by ascending hacker_id.
+
+
+
+              	select sb.hacker_id,hk.name from Submissions as sb,Difficulty as df,Hackers as hk,Challenges as ch
+		where sb.challenge_id=ch.challenge_id and
+     			ch.difficulty_level= df.difficulty_level and
+       			sb.hacker_id =hk.hacker_id and
+       			sb.score=df.score
+		group by sb.hacker_id,hk.name
+		having count(sb.hacker_id)>=2
+		order by count(sb.hacker_id) desc,sb.hacker_id
+
+
+
+Q6:-	Ollivander's Inventory
+-----------------------------------------------------------------------------------------
+
+	Harry Potter and his friends are at Ollivander's with Ron, finally replacing Charlie's old broken wand.
+	Hermione decides the best way to choose is by determining the minimum number of gold galleons needed to buy 
+	each non-evil wand of high power and age. Write a query to print the id, age, coins_needed, and power of the 
+	wands that Ron's interested in, sorted in order of descending power. If more than one wand has same power, 
+	sort the result in order of descending age.
+
+
+
+
+		SELECT id, age, m.coins_needed, m.power
+		from (select code,power,MIN(coins_needed) AS coins_needed from Wands group by code,power) as m,
+		Wands as w ,Wands_Property as wp
+		where m.code = w.code AND m.power = w.power AND m.coins_needed = w.coins_needed and m.code=wp.code 
+		and wp.is_evil=0 
+		order by m.power desc,age desc
+
+
+		/*
+		SELECT id, age, m.coins_needed, m.power FROM 
+		(SELECT code, power, MIN(coins_needed) AS coins_needed FROM Wands GROUP BY code, power) AS m
+		JOIN Wands AS w ON m.code = w.code AND m.power = w.power AND m.coins_needed = w.coins_needed
+		JOIN Wands_Property AS p ON m.code = p.code
+		WHERE p.is_evil = 0
+		ORDER BY m.power DESC, age DESC;*/
+
+
+
+
+
+
+
+
+
+
+
+
+select hk.hacker_id,hk.name,count(hk.hacker_id) as challenges_created,(select )
+from Hackers as hk,Challenges as ch
+where hk.hacker_id=ch.hacker_id and 
+group by hk.hacker_id,hk.hacker_id,hk.name
+order by count(hk.hacker_id) desc, hk.hacker_id
+
+
+
+
+Q7:-	Samantha was tasked with calculating the average monthly salaries for all employees in the EMPLOYEES table, 
+	but did not realize her keyboard's  key was broken until after completing the calculation. She wants your help 
+	finding the difference between her miscalculation (using salaries with any zeroes removed), and the actual average
+	 salary.Write a query calculating the amount of error (i.e.:actual-miscalculated  average monthly salaries), 
+	and round it up to the next integer.
+
+
+	select round(avg(salary)-avg(REPLACE(Salary, '0', ''))+.5)
+ 	from  EMPLOYEES;
+
+
+Q8:- 
+	We define an employee's total earnings to be their monthly  worked, and the maximum total earnings to be the 
+	maximum total earnings for any employee in the Employee table. Write a query to find the maximum total earnings 
+	for all employees as well as the total number of employees who have maximum total earnings. Then print these 
+	values as  space-separated integers.
+
+
+
+	select max(months*salary) as earning ,count(employee_id)
+	from Employee 
+	where (months*salary)=(select max((months*salary))from Employee)
+
+
+
+
+
+Q9:-	Write a query identifying the type of each record in the TRIANGLES table using its three side lengths. 
+	Output one of the following statements for each record in the table:
+		Equilateral: It's a triangle with 3 sides of equal length.
+		Isosceles: It's a triangle with 2 sides of equal length.
+		Scalene: It's a triangle with 3 sides of differing lengths.
+		Not A Triangle: The given values of A, B, and C don't form a triangle.
+
+
+		SELECT  CASE
+           		 WHEN A=B AND B=C THEN "Equilateral"
+           		 WHEN A<>B AND B<>C AND A<>C AND (A+B>=C and A+C>=B and B+C>=A) THEN "Scalene"
+           		 WHEN (A=B OR B=C OR A=C) AND (A+B>C and A+C>B and B+C>A) THEN "Isosceles"
+            		ELSE "Not A Triangle"
+            		END AS NAME
+		FROM TRIANGLES
+
+
+Q10:-
+------------------------------------------------------------------------------
+Generate the following two result sets:
+
+Query an alphabetically ordered list of all names in OCCUPATIONS, immediately followed by the first letter of each profession as a parenthetical (i.e.: enclosed in parentheses). For example: AnActorName(A), ADoctorName(D), AProfessorName(P), and ASingerName(S).
+Query the number of ocurrences of each occupation in OCCUPATIONS. Sort the occurrences in ascending order, and output them in the following format: 
+
+There are a total of [occupation_count] [occupation]s.
+where [occupation_count] is the number of occurrences of an occupation in OCCUPATIONS and [occupation] is the lowercase occupation name. If more than one Occupation has the same [occupation_count], they should be ordered alphabetically.
+
+Note: There will be at least two entries in the table for each type of occupation.
+
+
+
+		select concat(name,"(",SUBSTRING(occupation, 1, 1),")") as con
+		from OCCUPATIONS
+		ORDER BY NAME;
+		select concat(" There are a total of ",count(occupation)," ",LCASE(occupation),"s.")
+		from OCCUPATIONS
+		group by occupation
+		order by count(occupation) asc,occupation asc;
+
+Q11:-
+
+	Query the following two values from the STATION table:
+		The sum of all values in LAT_N rounded to a scale of  decimal places.
+		The sum of all values in LONG_W rounded to a scale of  decimal places.
+
+
+
+	select round(sum(LAT_N),2)AS lat ,round(sum(LONG_W),2)AS lon from station;
+
+------------------------------------------------------------------------------------------------------------------------
+Q12:-	Consider  and  to be two points on a 2D plane.
+
+	 happens to equal the minimum value in Northern Latitude (LAT_N in STATION).
+ 	 happens to equal the minimum value in Western Longitude (LONG_W in STATION).
+	 happens to equal the maximum value in Northern Latitude (LAT_N in STATION).
+ 	 happens to equal the maximum value in Western Longitude (LONG_W in STATION).
+	Query the Manhattan Distance between points  and  and round it to a scale of  decimal places.
+
+		The Manhattan Distance is |x1 - x2| + |y1 - y2| = |a - c| + |b - d|.
+
+
+
+	SELECT ROUND(ABS(MIN(LAT_N)-MAX(LAT_N))+  ABS(MIN(LONG_W)-MAX(LONG_W)) ,4) FROM STATION
+
+		
+
+-------------------------------------------------------------------------------------------------------------------------
+Q13:-	P(R) represents a pattern drawn by Julia in R rows. The following pattern represents P(5):
+
+	* * * * * 
+	* * * * 
+	* * * 
+	* * 
+	*
+	Write a query to print the pattern P(20).
+
+
+	SET @number = 21;
+	SELECT REPEAT('* ', @number := @number-1) FROM information_schema.tables LIMIT 20;
+
+
+--------------------------------------------------------------------------------------------------------------------------
+Q14:-
+	Julia asked her students to create some coding challenges. Write a query to print the hacker_id, name, and the
+	total number of challenges created by each student. Sort your results by the total number of challenges in 
+	descending order. If more than one student created the same number of challenges, then sort the result by 
+	hacker_id. If more than one student created the same number of challenges and the count is less than the 
+	maximum number of challenges created, then exclude those students from the result.
+ 
+
+
+		select hk.hacker_id,hk.name,count(hk.hacker_id) as challenges_created
+		from Hackers as hk,Challenges as ch
+		where hk.hacker_id=ch.hacker_id 
+		group by hk.hacker_id,hk.name
+		having challenges_created=(select count(ch1.challenge_id) from Challenges as ch1 group by ch1.hacker_id order by count(ch1.hacker_id) desc limit 1) or 
+		challenges_created not in (select count(ch2.challenge_id) from Challenges as ch2 group by ch2.hacker_id having ch2.hacker_id <> hk.hacker_id)
+		order by count(hk.hacker_id) desc, hk.hacker_id
+
